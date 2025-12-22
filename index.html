@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Mathe Generator V22.0 (Print Fixes)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS VARIABLEN --- */
+        :root {
+            --text-color: #000;
+            --line-color: #000;
+            --sol-color: #d60000; 
+            --sol-bg: #ffcccc;    
+            --arc-blue: #007acc;  
+            --grid-line: #bbb;
+            --input-bg: rgba(255, 255, 0, 0.1); 
+        }
+
+        body.ink-saver-mode {
+            --sol-color: #000;    
+            --sol-bg: #e0e0e0; 
+            --arc-blue: #444;     
+        }
+
+        /* --- GLOBAL --- */
+        body { font-family: 'Andika', sans-serif; background-color: #555; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .page { background: white; width: 210mm; min-height: 297mm; padding: 10mm 15mm; box-sizing: border-box; box-shadow: 0 0 15px rgba(0,0,0,0.5); position: relative; margin-bottom: 20px; overflow: hidden; color: var(--text-color); }
+
+        /* Editier-Verhalten */
+        [contenteditable="true"]:hover { background-color: rgba(255, 230, 0, 0.15); cursor: text; outline: 1px dotted #999; }
+        [contenteditable="true"]:focus { background-color: rgba(255, 230, 0, 0.3); outline: none; }
+
+        /* Inputs */
+        input.live-num { font-family: 'Andika', sans-serif; font-size: inherit; font-weight: bold; color: inherit; background: var(--input-bg); border: 1px dotted #ccc; border-radius: 3px; text-align: center; width: 2.5ch; padding: 0 2px; -moz-appearance: textfield; }
+        input.live-num:focus { background: #fff; outline: 2px solid #007acc; border-color: transparent; }
+        input.live-num.story-input { width: 4ch; display: inline-block; vertical-align: baseline; }
+
+        /* --- CONTROLS --- */
+        .controls { 
+            position: fixed; top: 20px; left: 20px; width: 270px; 
+            background: #fff; padding: 20px; padding-bottom: 40px; 
+            border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; 
+            max-height: 90vh; overflow-y: auto; font-family: 'Segoe UI', sans-serif; 
+        }
+        .controls h3 { margin-top: 0; margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .version-footer { position: absolute; bottom: 10px; left: 20px; font-size: 11px; color: #999; font-style: italic; }
+        .nav-label-xl { font-size: 16px; font-weight: 900; color: #000; margin-bottom: 8px; text-transform: uppercase; border-bottom: 2px solid #ffcc00; display: inline-block; }
+        .nav-label { font-size: 12px; font-weight: bold; color: #666; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .checkbox-container { display: flex; align-items: center; margin-bottom: 20px; background: #eee; padding: 10px; border-radius: 5px; }
+        .checkbox-container input { width: 20px; height: 20px; margin-right: 10px; cursor: pointer; }
+        select { width: 100%; padding: 8px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #ccc; font-size: 14px; font-weight: bold; color: #333; cursor: pointer; }
+        .tab-btn { display: block; width: 100%; padding: 8px; margin-bottom: 5px; font-size: 14px; cursor: pointer; border: 1px solid #ccc; border-radius: 5px; background: #f0f0f0; text-align: left; }
+        .tab-btn.active { background-color: #007acc; color: white; border-color: #005fa3; font-weight: bold; }
+        
+        .action-btn { display: block; width: 100%; padding: 12px; margin-bottom: 10px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; text-align: center; text-decoration: none; box-sizing: border-box; }
+        .btn-roll { background-color: #ffcc00; color: #333; margin-top: 15px; }
+        .btn-print { background-color: #28a745; color: white; }
+        .btn-help { background-color: #17a2b8; color: white; margin-top: 5px; }
+        .btn-reset { background-color: #ddd; color: #333; font-size: 12px; padding: 5px; margin-top:10px; }
+        .btn-feedback { background-color: #6c757d; color: white; font-size: 14px; margin-top: 5px; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-box { background: white; width: 500px; max-width: 90%; padding: 25px; border-radius: 10px; font-family: 'Segoe UI', sans-serif; overflow-y: auto; max-height: 90vh; }
+        .close-modal { background: #d60000; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; float: right; font-weight: bold; }
+
+        /* --- BLATT ELEMENTE --- */
+        .solution-mark { position: absolute; top: 10mm; right: 10mm; font-size: 20px; font-weight: bold; color: var(--sol-color); border: 2px solid var(--sol-color); padding: 5px 10px; transform: rotate(15deg); opacity: 0.8; }
+        .sol { color: var(--sol-color); font-weight: bold; transition: color 0.3s; }
+        .header-title { text-align: center; font-size: 22px; font-weight: 700; text-transform: uppercase; border-bottom: 3px double #000; padding-bottom: 2px; margin-bottom: 5px; letter-spacing: 1px; }
+        .meta-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; font-weight: 500; }
+        .line { display: inline-block; border-bottom: 1px solid #000; height: 18px; }
+        .test-number { font-weight: bold; font-size: 18px; color: #333; padding-left: 5px; }
+        h2 { font-size: 15px; margin: 0 0 3px 0; padding-left: 10px; border-left: 6px solid #ddd; text-transform: uppercase; color: #333; }
+        
+        /* ABSTÄNDE - ENTKOPPELT */
+        .task-row-mix { margin-bottom: 8px; }
+        .task-row-steps { margin-bottom: 55px; }
+        .task-row-lines { margin-bottom: 50px; }
+        .task-row-walls { margin-bottom: 50px; }
+        .task-row-sym { margin-bottom: 40px; }
+        
+        /* FIX V22: Abstand verkleinert von 45px auf 30px */
+        .task-row-story { margin-bottom: 30px; } 
+
+        .header-spacer { height: 30px; width: 100%; }
+        .top-margin-large { margin-top: 40px; }
+        .footer-info { position: absolute; bottom: 8mm; left: 0; width: 100%; text-align: center; font-size: 11px; color: #999; font-style: italic; }
+
+        /* --- LAYOUTS --- */
+        .side-layout { display: flex; flex-direction: row; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .side-label { font-weight: bold; margin-right: 15px; font-size: 16px; width: 30px; min-width: 30px; text-align: right; display: block; flex-shrink: 0; }
+        .sub-label { font-weight: bold; margin-right: 5px; display: inline-block; }
+
+        /* Symmetrie */
+        .sym-wrapper { display: flex; flex-direction: row; justify-content: center; gap: 40px; width: 100%; }
+        .sym-box { display: flex; flex-direction: column; align-items: center; }
+        .sym-table { border-collapse: collapse; border: 2px solid #000; background: #fff; }
+        
+        /* FIX V22: print-color-adjust */
+        .sym-table td { 
+            width: 20px; height: 20px; border: 1px solid #999; padding: 0; cursor: pointer; 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+        }
+        
+        .axis-border { border-right: 3px solid #000 !important; }
+        .filled-cell { background-color: #555 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .solution-cell { background-color: var(--sol-bg) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+        /* Raster */
+        /* FIX V22: print-color-adjust für das Raster */
+        .grid-paper { 
+            background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); 
+            background-size: 20px 20px; 
+            border: 2px solid #666; width: 100%; height: 122px; position: relative; 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+        }
+        .grid-text { font-size: 22px; font-weight: 600; letter-spacing: 3px; line-height: 40px; position: absolute; top: -2px; left: 8px; background-color: rgba(255,255,255,0.6); padding: 0 5px; white-space: pre-wrap; }
+
+        /* Mauern */
+        .walls-wrapper { display: flex; justify-content: space-around; padding: 0; }
+        .wall { display: flex; flex-direction: column; align-items: center; }
+        .brick-row { display: flex; }
+        
+        /* FIX V22: print-color-adjust für die Steine */
+        .brick { 
+            width: 45px; height: 24px; border: 2px solid #000; margin: 2px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 16px; font-weight: bold; background: #fff; 
+            -webkit-print-color-adjust: exact !important; 
+            print-color-adjust: exact !important; 
+        }
+        .brick input.live-num { width: 35px; border: none; background: transparent; }
+
+        /* Rechenstrich */
+        .number-line-box { margin-bottom: 5px; position: relative; } 
+        .number-line { width: 95%; height: 75px; border-bottom: 2px solid #000; position: relative; margin: 0 auto; margin-top: 20px; }
+        .number-line::after { content: ""; position: absolute; right: -2px; bottom: -6px; width: 0; height: 0; border-left: 10px solid #000; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+        .tick { position: absolute; bottom: 0; width: 3px; height: 10px; background: #000; transition: left 0.3s; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .tick-label { position: absolute; top: 12px; transform: translateX(-50%); font-size: 16px; font-weight: bold; transition: left 0.3s; white-space: nowrap;}
+        .tick-sol { background: var(--sol-color); height: 10px; z-index: 2; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .tick-label-sol { color: var(--sol-color); }
+        .arc { position: absolute; bottom: 2px; border-top: 2px solid var(--sol-color); border-left: 2px solid var(--sol-color); border-right: 2px solid var(--sol-color); border-top-left-radius: 20px; border-top-right-radius: 20px; height: 25px; box-sizing: border-box; border-bottom: none; z-index: 5; transition: all 0.3s; }
+        .arc-label { position: absolute; top: -22px; width: 100%; text-align: center; color: var(--sol-color); font-size: 13px; font-weight: bold; }
+        .arc-big { position: absolute; bottom: 2px; border-top: 2px solid var(--arc-blue); border-left: 2px solid var(--arc-blue); border-right: 2px solid var(--arc-blue); border-top-left-radius: 30px; border-top-right-radius: 30px; height: 50px; box-sizing: border-box; border-bottom: none; z-index: 4; transition: all 0.3s; }
+        .arc-big-label { position: absolute; top: -25px; width: 100%; text-align: center; color: var(--arc-blue); font-size: 14px; font-weight: bold; }
+
+        /* Story */
+        .story-text { font-size: 16px; line-height: 1.3; margin-bottom: 3px; font-family: 'Andika', sans-serif; }
+        .label-small { font-size: 12px; color: #555; font-style: italic; margin-bottom: 2px; }
+        .answer-sol-text { font-family: 'Andika', sans-serif; color: var(--sol-color); margin-left: 10px; font-size: 16px; }
+
+        /* --- DRUCK-MODUS --- */
+        @page { size: A4; margin: 0; }
+        @media print {
+            body { background: none; display: block; margin: 0; padding: 0; overflow: hidden; }
+            .controls, .modal-overlay { display: none !important; }
+            [contenteditable="true"] { outline: none !important; background-color: transparent !important; }
+            input.live-num { border: none !important; background: transparent !important; padding: 0 !important; -webkit-appearance: none; margin: 0; }
+            .page { width: 100%; margin: 0; border: none; box-shadow: none; zoom: 0.92; -moz-transform: scale(0.92); height: 296mm; overflow: hidden; padding: 15mm; page-break-after: always; break-after: page; }
+            .page:last-child { page-break-after: avoid; break-after: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="modal-overlay" id="helpModal">
+        <div class="modal-box">
+            <button class="close-modal" onclick="closeHelp()">X</button>
+            <h2>Hilfe & Live-Modus</h2>
+            <p>Willkommen beim Mathe Generator für Klasse 2. Mit diesem Generator können Zufalls Aufgaben und Tests erstellt werden, die dann für die Kinder ausgedruckt werden können.</p>
+            <h4>1. Gelbe Felder = Eingabe</h4>
+            <p>Sie können alle Zahlen auf dem Blatt ändern. Das Lösungsblatt rechnet sofort neu.</p>
+            <h4>2. Interaktive Symmetrie</h4>
+            <p>Klicken Sie im Raster auf Kästchen, um sie zu füllen.</p>
+            <h4>3. Tintenspar-Modus</h4>
+            <p>Macht alles Schwarz-Weiß (auch Symmetrie-Lösungen werden hellgrau).</p>
+        </div>
+    </div>
+
+    <div class="controls">
+        <h3>Mathe Generator</h3>
+        <div class="nav-label-xl">Modus Wählen</div>
+        <button class="tab-btn active" onclick="switchMode('mix', this)">📋 Mathe Test</button>
+        <div class="nav-label" style="margin-top:15px;">Übungsaufgaben:</div>
+        <button class="tab-btn" onclick="switchMode('steps', this)">1. Rechenschritte</button>
+        <button class="tab-btn" onclick="switchMode('lines', this)">2. Rechenstrich</button>
+        <button class="tab-btn" onclick="switchMode('walls', this)">3. Rechenmauern</button>
+        <button class="tab-btn" onclick="switchMode('sym', this)">4. Symmetrie</button>
+        <button class="tab-btn" onclick="switchMode('story', this)">5. Sachaufgaben</button>
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
+        <div class="nav-label">Aufgabentyp (Logik):</div>
+        <select id="diff-select" onchange="triggerRecalcAll()">
+            <option value="easy">ZE ± E (Zehnerübergang)</option>
+            <option value="hard">ZE ± ZE (Schrittweise)</option>
+        </select>
+        <div class="checkbox-container">
+            <input type="checkbox" id="ink-saver" onchange="toggleInkSaver()">
+            <label for="ink-saver">Tintenspar-Modus</label>
+        </div>
+        <button class="action-btn btn-roll" onclick="generateCurrent(true)">🎲 Neu Würfeln</button>
+        <button class="action-btn btn-help" onclick="openHelp()">❓ Hilfe & Anleitung</button>
+        <button class="action-btn btn-print" onclick="window.print()">🖨️ Drucken / PDF</button>
+        <button class="btn-reset" onclick="resetCounter()">Zähler Reset</button>
+
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
+        <div style="font-size:12px; font-weight:bold; color:#666; margin-bottom:5px;">Gerne Fehler/Bugs und Feedback melden:</div>
+        <a href="mailto:mark@simsoft.de" class="action-btn btn-feedback">✉️ E-Mail an Mark</a>
+
+        <div class="version-footer">
+            Vorbereitung Mathe Klasse 2 (Flex & Flo) - V22.0
+        </div>
+    </div>
+
+    <div class="page" id="page-student">
+        <div class="header-title" id="sheet-title" contenteditable="true">Mathe Test</div>
+        <div class="meta-info">
+            <div style="width: 40%;">Name: <span class="line" style="width: 70%;"></span></div>
+            <div style="width: 30%;">Datum: <span class="line" style="width: 60%;"></span></div>
+            <div style="width: 20%; text-align: right;">Nr.: <span class="test-nr-display test-number" contenteditable="true">1</span></div>
+        </div>
+        <div id="student-content"></div>
+    </div>
+
+    <div class="page" id="page-solution">
+        <div class="solution-mark">LÖSUNGSBLATT</div>
+        <div class="header-title" id="sheet-title-sol" contenteditable="true">Mathe Test (Lösung)</div>
+        <div class="meta-info">
+            <div style="width: 40%;">Name: <span class="line" style="border:none; width: 70%; font-style:italic; color:#999;">Musterlösung</span></div>
+            <div style="width: 30%;">Datum: <span class="line" style="border:none; width: 60%;"></span></div>
+            <div style="width: 20%; text-align: right;">Nr.: <span class="test-nr-display test-number" style="color:var(--sol-color)" contenteditable="true">1</span></div>
+        </div>
+        <div id="solution-content"></div>
+    </div>
+
+    <script>
+        let currentNr = 1; let currentMode = 'mix'; let uniqueIdCounter = 0;
+        let usedStartNumbers = [];
+
+        const ALL_STORIES = [
+            { t: "Auf dem Pausenhof spielen {A} Kinder Fangen. {B} Kinder kommen dazu. Wie viele spielen jetzt?", op: "+", u: "Kinder" },
+            { t: "Im Bus sitzen {A} Fahrgäste. An der Haltestelle steigen {B} Personen aus. Wie viele sind noch im Bus?", op: "-", u: "Personen" },
+            { t: "Lina hat {A} Muscheln gesammelt. Tim schenkt ihr noch {B} Muscheln. Wie viele hat sie nun?", op: "+", u: "Muscheln" },
+            { t: "In der Tüte waren {A} Bonbons. Die Klasse hat {B} aufgegessen. Wie viele sind übrig?", op: "-", u: "Bonbons" },
+            { t: "Im Regal stehen {A} Bücher. Frau Müller stellt {B} neue Bücher hinein. Wie viele Bücher sind es jetzt?", op: "+", u: "Bücher" },
+            { t: "Max hat {A} Euro gespart. Er kauft ein Spielzeug für {B} Euro. Wie viel Geld bleibt übrig?", op: "-", u: "Euro" },
+            { t: "Auf dem großen Parkplatz stehen {A} Autos. {B} Autos fahren weg. Wie viele stehen noch dort?", op: "-", u: "Autos" },
+            { t: "In der Kiste liegen {A} Äpfel. Für einen Kuchen werden {B} Äpfel genommen. Wie viele bleiben übrig?", op: "-", u: "Äpfel" },
+            { t: "Tom baut einen Turm mit {A} Bausteinen. Leo setzt noch {B} Steine oben drauf. Wie viele sind es?", op: "+", u: "Bausteine" },
+            { t: "Auf dem Baum sitzen {A} Vögel. {B} Vögel fliegen weg. Wie viele Vögel sitzen noch dort?", op: "-", u: "Vögel" },
+            { t: "Im Blumenladen stehen {A} Rosen. Die Verkäuferin stellt {B} Tulpen dazu. Wie viele Blumen sind es?", op: "+", u: "Blumen" },
+            { t: "Lisa hat {A} Sticker in ihrem Heft. Sie bekommt {B} neue Sticker geschenkt. Wie viele hat sie jetzt?", op: "+", u: "Sticker" },
+            { t: "Das Buch hat {A} Seiten. Tim hat schon {B} Seiten gelesen. Wie viele Seiten fehlen noch?", op: "-", u: "Seiten" },
+            { t: "In der Klasse sind {A} Kinder. Heute sind {B} Kinder krank. Wie viele Kinder sind in der Schule?", op: "-", u: "Kinder" }
+        ];
+
+        function getUniqueId() { return 'task_' + (uniqueIdCounter++); }
+        function getLabel(index, mode) { return (mode === 'mix') ? String.fromCharCode(97 + (index % 2)) + ")" : String.fromCharCode(97 + index) + ")"; }
+        function toggleInkSaver() { document.body.classList.toggle('ink-saver-mode'); }
+        function openHelp() { document.getElementById('helpModal').style.display = 'flex'; }
+        function closeHelp() { document.getElementById('helpModal').style.display = 'none'; }
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+        
+        function getDistinctRandom(min, max) {
+            let num, tries = 0;
+            do {
+                num = rand(min, max);
+                let tooClose = usedStartNumbers.some(n => Math.abs(n - num) < 6);
+                if (!tooClose) break;
+                tries++;
+            } while (tries < 15);
+            usedStartNumbers.push(num);
+            return num;
+        }
+
+        function makeFieldsEditable() {
+            const selectors = '.story-text, .grid-text, .tick-label, .brick, .arc-label, .arc-big-label, .answer-sol-text, h2, .header-title, .test-number, .sub-label, .side-label';
+            document.querySelectorAll(selectors).forEach(el => {
+                el.contentEditable = "true";
+                el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak'); }});
+            });
+        }
+
+        function switchMode(mode, btnElement) {
+            currentMode = mode;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            const titles = { 'mix': 'Mathe Test', 'steps': 'Übungsblatt: Rechenschritte', 'lines': 'Übungsblatt: Rechenstrich', 'walls': 'Übungsblatt: Rechenmauern', 'sym': 'Übungsblatt: Symmetrie', 'story': 'Übungsblatt: Sachaufgaben' };
+            document.getElementById('sheet-title').innerText = titles[mode];
+            document.getElementById('sheet-title-sol').innerText = titles[mode] + " (Lösung)";
+            generateCurrent(false);
+        }
+
+        function generateCurrent(increment = false) {
+            if (increment) updateTestNumber(); else loadInitialNumber();
+            usedStartNumbers = [];
+            const difficulty = document.getElementById('diff-select').value;
+            const sCont = document.getElementById('student-content');
+            const tCont = document.getElementById('solution-content');
+            sCont.innerHTML = ''; tCont.innerHTML = '';
+            
+            let currentStoryPool = [...ALL_STORIES]; 
+            const addTask = (generatorFunc, extraSpace, rowIdx, ...args) => {
+                let id = getUniqueId();
+                let taskObj = generatorFunc(id, extraSpace, difficulty, rowIdx, ...args);
+                let divS = document.createElement('div'); divS.innerHTML = taskObj.student;
+                let divT = document.createElement('div'); divT.innerHTML = taskObj.teacher;
+                sCont.appendChild(divS); tCont.appendChild(divT);
+                if (taskObj.registerListeners) taskObj.registerListeners();
+            };
+
+            if (currentMode === 'mix') {
+                addTask(genStepTask, false, null); addTask(genLineTask, false, null); addTask(genWallTask, false, null);
+                addTask(genSymTask, false, null); addTask(genStoryTask, false, null, currentStoryPool);
+            } else if (currentMode === 'steps') { for(let i=0; i<5; i++) addTask(genStepTask, true, i); }
+            else if (currentMode === 'lines') { for(let i=0; i<3; i++) addTask(genLineTask, true, i); }
+            else if (currentMode === 'walls') { for(let i=0; i<5; i++) addTask(genWallTask, true, i); }
+            else if (currentMode === 'sym') { for(let i=0; i<5; i++) addTask(genSymTask, true, i); }
+            else if (currentMode === 'story') { for(let i=0; i<4; i++) addTask(genStoryTask, true, i, currentStoryPool); }
+            makeFieldsEditable();
+        }
+
+        function triggerRecalcAll() { document.querySelectorAll('input.live-num').forEach(inp => { inp.dispatchEvent(new Event('input')); }); }
+
+        function genStepTask(id, extraSpace, diff, rowIdx) {
+            let labelL = (rowIdx === null) ? 'a)' : getLabel(rowIdx * 2, 'practice');
+            let labelR = (rowIdx === null) ? 'b)' : getLabel(rowIdx * 2 + 1, 'practice');
+            let a1 = getDistinctRandom(15, 75), a2 = rand(5, 18), b1 = getDistinctRandom(35, 95), b2 = rand(5, 18);
+            let h2 = (currentMode === 'mix') ? '<h2>1. Rechne schrittweise</h2>' : '';
+
+            if (diff === 'easy') { 
+                while ((a1 % 10) === 0 || (a1 % 10) === 1) a1 = getDistinctRandom(15, 75);
+                a2 = rand(1, 9); 
+                let distToNextTen = 10 - (a1 % 10);
+                if (a2 <= distToNextTen) a2 = rand(distToNextTen + 1, 9);
+                if (a1 + a2 > 99) a1 = 85; 
+
+                while ((b1 % 10) === 0 || (b1 % 10) === 9) b1 = getDistinctRandom(35, 95);
+                b2 = rand(1, 9); 
+                let distToPrevTen = b1 % 10;
+                if (b2 <= distToPrevTen) b2 = rand(distToPrevTen + 1, 9);
+            }
+
+            let cls;
+            if(currentMode === 'mix') cls = 'task-row-mix';
+            else cls = 'task-row-steps';
+            
+            let wrapperS = `<div class="${cls}" id="S_${id}">${h2}<div style="display:flex; gap:30px;"><div style="flex:1"><div><span class="sub-label">${labelL}</span></div><div class="grid-paper"><div class="grid-text"><input class="live-num" id="in_a1_${id}" value="${a1}"> + <input class="live-num" id="in_a2_${id}" value="${a2}"> =</div></div></div><div style="flex:1"><div><span class="sub-label">${labelR}</span></div><div class="grid-paper"><div class="grid-text"><input class="live-num" id="in_b1_${id}" value="${b1}"> - <input class="live-num" id="in_b2_${id}" value="${b2}"> =</div></div></div></div></div>`;
+            let wrapperT = `<div class="${cls}" id="T_${id}">${h2}<div style="display:flex; gap:30px;"><div style="flex:1"><div><span class="sub-label">${labelL}</span></div><div class="grid-paper"><div class="grid-text" id="out_a_${id}"></div></div></div><div style="flex:1"><div><span class="sub-label">${labelR}</span></div><div class="grid-paper"><div class="grid-text" id="out_b_${id}"></div></div></div></div></div>`;
+            
+            const update = () => {
+                const diffMode = document.getElementById('diff-select').value;
+                let va1 = parseInt(document.getElementById(`in_a1_${id}`).value)||0; let va2 = parseInt(document.getElementById(`in_a2_${id}`).value)||0;
+                let resA = va1+va2, midA, rest;
+                if (diffMode === 'easy') {
+                    let toTen = (10 - (va1%10))%10; if(toTen>va2) toTen=va2; rest=va2-toTen; midA=va1+toTen;
+                    document.getElementById(`out_a_${id}`).innerHTML = `${va1} + ${va2} = <span class="sol">${resA}</span>\n${va1} + ${toTen} = <span class="sol">${midA}</span>\n<span class="sol">${midA}</span> + <span class="sol">${rest}</span> = <span class="sol">${resA}</span>`;
+                } else {
+                    let tens = Math.floor(va2/10)*10; let ones = va2%10; midA = va1+tens;
+                    document.getElementById(`out_a_${id}`).innerHTML = `${va1} + ${va2} = <span class="sol">${resA}</span>\n${va1} + ${tens} = <span class="sol">${midA}</span>\n<span class="sol">${midA}</span> + <span class="sol">${ones}</span> = <span class="sol">${resA}</span>`;
+                }
+                let vb1 = parseInt(document.getElementById(`in_b1_${id}`).value)||0; let vb2 = parseInt(document.getElementById(`in_b2_${id}`).value)||0;
+                let resB = vb1-vb2, midB;
+                if (diffMode === 'easy') {
+                    let toTen = vb1%10; if(toTen>vb2) toTen=vb2; rest=vb2-toTen; midB=vb1-toTen;
+                    document.getElementById(`out_b_${id}`).innerHTML = `${vb1} - ${vb2} = <span class="sol">${resB}</span>\n${vb1} - ${toTen} = <span class="sol">${midB}</span>\n<span class="sol">${midB}</span> - <span class="sol">${rest}</span> = <span class="sol">${resB}</span>`;
+                } else {
+                    let tens = Math.floor(vb2/10)*10; let ones = vb2%10; midB = vb1-tens;
+                    document.getElementById(`out_b_${id}`).innerHTML = `${vb1} - ${vb2} = <span class="sol">${resB}</span>\n${vb1} - ${tens} = <span class="sol">${midB}</span>\n<span class="sol">${midB}</span> - <span class="sol">${ones}</span> = <span class="sol">${resB}</span>`;
+                }
+            };
+            return { student: wrapperS, teacher: wrapperT, registerListeners: () => { [`in_a1_${id}`, `in_a2_${id}`, `in_b1_${id}`, `in_b2_${id}`].forEach(iid => document.getElementById(iid).addEventListener('input', update)); update(); }};
+        }
+
+        function genLineTask(id, extraSpace, diff, rowIdx) {
+            let labelA = (rowIdx === null) ? 'a)' : getLabel(rowIdx * 2, 'practice');
+            let labelB = (rowIdx === null) ? 'b)' : getLabel(rowIdx * 2 + 1, 'practice');
+            let a1 = getDistinctRandom(15, 60), a2 = rand(6, 25), b1 = getDistinctRandom(40, 90), b2 = rand(6, 25);
+            let h2 = (currentMode === 'mix') ? '<h2>2. Zeichne und rechne am Rechenstrich</h2>' : '';
+
+            if (diff === 'easy') {
+                while ((a1 % 10) === 0 || (a1 % 10) === 1) a1 = getDistinctRandom(15, 60);
+                a2 = rand(2, 9); 
+                let distToNextTen = 10 - (a1 % 10);
+                if (a2 <= distToNextTen) a2 = rand(distToNextTen + 1, 9);
+                
+                while ((b1 % 10) === 0 || (b1 % 10) === 9) b1 = getDistinctRandom(40, 90);
+                b2 = rand(2, 9);
+                let distToPrevTen = b1 % 10;
+                if (b2 <= distToPrevTen) b2 = rand(distToPrevTen + 1, 9);
+            }
+
+            // ENTKOOPPELT
+            let cls;
+            if(currentMode === 'mix') cls = 'task-row-mix';
+            else cls = 'task-row-lines';
+            
+            let wrapperS = `<div class="${cls}">${h2}<div class="number-line-box"><div style="font-size:16px; margin-bottom:5px;"><strong>${labelA}</strong> &nbsp; <input class="live-num" id="in_s_a_${id}" value="${a1}"> + <input class="live-num" id="in_d_a_${id}" value="${a2}"> = ____</div><div class="number-line"><div class="tick" style="left: 10%;"></div><div class="tick-label" style="left: 10%;" id="txt_s_a_${id}">${a1}</div></div></div><div class="number-line-box" style="margin-top:10px;"><div style="font-size:16px; margin-bottom:5px;"><strong>${labelB}</strong> &nbsp; <input class="live-num" id="in_s_b_${id}" value="${b1}"> - <input class="live-num" id="in_d_b_${id}" value="${b2}"> = ____</div><div class="number-line"><div class="tick" style="left: 90%;"></div><div class="tick-label" style="left: 90%;" id="txt_s_b_${id}">${b1}</div></div></div></div>`;
+            let wrapperT = `<div class="${cls}">${h2}<div id="sol_a_${id}"></div><div id="sol_b_${id}" style="margin-top:10px;"></div></div>`;
+            const update = () => {
+                const diffMode = document.getElementById('diff-select').value;
+                const draw = (sub, startVal, delta, isPlus) => {
+                    document.getElementById(`txt_s_${sub}_${id}`).innerText = startVal;
+                    let res, mid, step1, step2, w1, w2, pStart, pMid, pEnd;
+                    if (isPlus) {
+                        res = startVal + delta;
+                        if(diffMode === 'easy') { let toTen = (10-(startVal%10))%10; if(toTen>delta) toTen=delta; step1=toTen; step2=delta-step1; } 
+                        else { step1 = Math.floor(delta/10)*10; step2 = delta % 10; }
+                        mid = startVal + step1; let ratio = (delta===0)?0.5:(step1/delta); w1=80*ratio; if(w1<10) w1=10; if(w1>70) w1=70; w2=80-w1; pStart=10; pMid=10+w1; pEnd=90;
+                        document.getElementById(`sol_${sub}_${id}`).innerHTML = `<div class="number-line-box"><div style="font-size:16px; margin-bottom:5px;"><strong>${sub==='a'?labelA:labelB}</strong> &nbsp; ${startVal} + ${delta} = <span class="sol">${res}</span></div><div class="number-line"><div class="tick" style="left:${pStart}%"></div><div class="tick-label" style="left:${pStart}%">${startVal}</div><div class="tick tick-sol" style="left:${pMid}%"></div><div class="tick-label tick-label-sol" style="left:${pMid}%">${mid}</div><div class="tick tick-sol" style="left:${pEnd}%"></div><div class="tick-label tick-label-sol" style="left:${pEnd}%">${res}</div><div class="arc" style="left:${pStart}%; width:${w1}%"><div class="arc-label">+${step1}</div></div><div class="arc" style="left:${pMid}%; width:${w2}%"><div class="arc-label">+${step2}</div></div><div class="arc-big" style="left:${pStart}%; width:80%"><div class="arc-big-label">+${delta}</div></div></div></div>`;
+                    } else {
+                        res = startVal - delta;
+                        if(diffMode === 'easy') { let toTen=startVal%10; if(toTen>delta) toTen=delta; step1=toTen; step2=delta-step1; }
+                        else { step1 = Math.floor(delta/10)*10; step2 = delta % 10; }
+                        mid = startVal - step1; let ratio = (delta===0)?0.5:(step1/delta); w1=80*ratio; if(w1<10) w1=10; if(w1>70) w1=70; w2=80-w1; pStart=90; pMid=90-w1; pEnd=10;
+                        document.getElementById(`sol_${sub}_${id}`).innerHTML = `<div class="number-line-box"><div style="font-size:16px; margin-bottom:5px;"><strong>${sub==='a'?labelA:labelB}</strong> &nbsp; ${startVal} - ${delta} = <span class="sol">${res}</span></div><div class="number-line"><div class="tick" style="left:${pStart}%"></div><div class="tick-label" style="left:${pStart}%">${startVal}</div><div class="tick tick-sol" style="left:${pMid}%"></div><div class="tick-label tick-label-sol" style="left:${pMid}%">${mid}</div><div class="tick tick-sol" style="left:${pEnd}%"></div><div class="tick-label tick-label-sol" style="left:${pEnd}%">${res}</div><div class="arc" style="left:${pMid}%; width:${w1}%"><div class="arc-label">-${step1}</div></div><div class="arc" style="left:${pEnd}%; width:${w2}%"><div class="arc-label">-${step2}</div></div><div class="arc-big" style="left:${pEnd}%; width:80%"><div class="arc-big-label">-${delta}</div></div></div></div>`;
+                    }
+                };
+                let va = parseInt(document.getElementById(`in_s_a_${id}`).value)||0; let da = parseInt(document.getElementById(`in_d_a_${id}`).value)||0; draw('a', va, da, true);
+                let vb = parseInt(document.getElementById(`in_s_b_${id}`).value)||0; let db = parseInt(document.getElementById(`in_d_b_${id}`).value)||0; draw('b', vb, db, false);
+            };
+            return { student: wrapperS, teacher: wrapperT, registerListeners: () => { [`in_s_a_${id}`, `in_d_a_${id}`, `in_s_b_${id}`, `in_d_b_${id}`].forEach(iid => document.getElementById(iid).addEventListener('input', update)); update(); }};
+        }
+
+        function genWallTask(id, extraSpace, diff, rowIdx) {
+            let labels = rowIdx === null ? ['a)', 'b)', 'c)'] : [getLabel(rowIdx*3, 'practice'), getLabel(rowIdx*3+1, 'practice'), getLabel(rowIdx*3+2, 'practice')];
+            let walls = []; for(let i=0; i<3; i++) { 
+                if (diff === 'easy') {
+                    // ZE+E FIX: First=ZE(15-50), Second=E(2-9), Third=E(1-5) 
+                    // -> Ensures bottom calculations are ZE+E and E+E, top calculation is ZE+E
+                    walls.push([getDistinctRandom(15, 60), rand(2, 9), rand(1, 5)]); 
+                } else {
+                    walls.push([rand(5, 15), rand(5, 15), rand(5, 15)]); 
+                }
+            }
+            let h2 = (currentMode === 'mix') ? '<h2>3. Rechenmauern</h2>' : '';
+            
+            // ENTKOOPPELT
+            let cls;
+            if(currentMode === 'mix') cls = 'task-row-mix';
+            else cls = 'task-row-walls';
+            let extraClass = (rowIdx === 0 && currentMode !== 'mix') ? 'top-margin-large' : '';
+            
+            let sHtml = `<div class="${cls} ${extraClass}">${h2}<div class="walls-wrapper">`;
+            let tHtml = `<div class="${cls} ${extraClass}">${h2}<div class="walls-wrapper">`;
+            let inputIds = [];
+            for(let i=0; i<3; i++) {
+                let bid1 = `w_${id}_${i}_1`, bid2 = `w_${id}_${i}_2`, bid3 = `w_${id}_${i}_3`;
+                inputIds.push([bid1, bid2, bid3]);
+                sHtml += `<div class="side-layout"><span class="side-label">${labels[i]}</span><div class="wall"><div class="brick-row"><div class="brick" id="s_top_${id}_${i}"></div></div><div class="brick-row"><div class="brick" id="s_m1_${id}_${i}"></div><div class="brick" id="s_m2_${id}_${i}"></div></div><div class="brick-row"><div class="brick"><input class="live-num" id="${bid1}" value="${walls[i][0]}"></div><div class="brick"><input class="live-num" id="${bid2}" value="${walls[i][1]}"></div><div class="brick"><input class="live-num" id="${bid3}" value="${walls[i][2]}"></div></div></div></div>`;
+                tHtml += `<div class="side-layout"><span class="side-label">${labels[i]}</span><div class="wall"><div class="brick-row"><div class="brick sol" id="t_top_${id}_${i}"></div></div><div class="brick-row"><div class="brick sol" id="t_m1_${id}_${i}"></div><div class="brick sol" id="t_m2_${id}_${i}"></div></div><div class="brick-row"><div class="brick" id="t_b1_${id}_${i}"></div><div class="brick" id="t_b2_${id}_${i}"></div><div class="brick" id="t_b3_${id}_${i}"></div></div></div></div>`;
+            }
+            sHtml += `</div></div>`; tHtml += `</div></div>`;
+            const update = () => {
+                for(let i=0; i<3; i++) {
+                    let v1 = parseInt(document.getElementById(inputIds[i][0]).value)||0; let v2 = parseInt(document.getElementById(inputIds[i][1]).value)||0; let v3 = parseInt(document.getElementById(inputIds[i][2]).value)||0;
+                    let m1=v1+v2, m2=v2+v3, top=m1+m2;
+                    document.getElementById(`t_b1_${id}_${i}`).innerText=v1; document.getElementById(`t_b2_${id}_${i}`).innerText=v2; document.getElementById(`t_b3_${id}_${i}`).innerText=v3;
+                    document.getElementById(`t_m1_${id}_${i}`).innerText=m1; document.getElementById(`t_m2_${id}_${i}`).innerText=m2; document.getElementById(`t_top_${id}_${i}`).innerText=top;
+                }
+            };
+            return { student: sHtml, teacher: tHtml, registerListeners: () => { inputIds.flat().forEach(iid => document.getElementById(iid).addEventListener('input', update)); update(); }};
+        }
+
+        function genSymTask(id, extraSpace, diff, rowIdx) {
+            let labels = rowIdx === null ? ['a)', 'b)'] : [getLabel(rowIdx*2, 'practice'), getLabel(rowIdx*2+1, 'practice')];
+            let h2 = (currentMode === 'mix') ? '<h2>4. Zeichne das Spiegelbild</h2>' : '';
+            
+            // ENTKOOPPELT
+            let cls;
+            if(currentMode === 'mix') cls = 'task-row-mix';
+            else cls = 'task-row-sym';
+            let extraClass = (rowIdx === 0 && currentMode !== 'mix') ? 'top-margin-large' : '';
+
+            let grids = [[], []];
+            for(let k=0; k<2; k++) { for(let r=0; r<6; r++) { let row = []; for(let c=0; c<3; c++) row.push(Math.random()<0.4); grids[k].push(row); }}
+            const buildGrid = (k, type) => {
+                let h = `<table class="sym-table" id="sym_${type}_${id}_${k}">`;
+                for(let r=0; r<6; r++) { h += `<tr>`; for(let c=0; c<3; c++) { let act = grids[k][r][c]?"filled-cell":""; let border = (c===2) ? " axis-border" : ""; let ev = (type==='s') ? `onclick="toggleSym('${id}',${k},${r},${c})"` : ""; h += `<td class="${act}${border}" ${ev} id="cell_${type}_${id}_${k}_${r}_${c}_L"></td>`; } for(let c=0; c<3; c++) { let mC=2-c; let act=(type==='t'&&grids[k][r][mC])?"solution-cell":""; h += `<td class="${act}" id="cell_${type}_${id}_${k}_${r}_${c}_R"></td>`; } h += `</tr>`; }
+                return h + `</table>`;
+            };
+            let sHtml = `<div class="${cls} ${extraClass}">${h2}<div class="sym-wrapper">`;
+            let tHtml = `<div class="${cls} ${extraClass}">${h2}<div class="sym-wrapper">`;
+            for(let k=0; k<2; k++) {
+                sHtml += `<div class="side-layout"><span class="side-label">${labels[k]}</span><div class="sym-box">${buildGrid(k, 's')}</div></div>`;
+                tHtml += `<div class="side-layout"><span class="side-label">${labels[k]}</span><div class="sym-box">${buildGrid(k, 't')}</div></div>`;
+            }
+            return { student: sHtml + `</div></div>`, teacher: tHtml + `</div></div>` };
+        }
+
+        window.toggleSym = function(id, k, r, c) {
+            let cellS = document.getElementById(`cell_s_${id}_${k}_${r}_${c}_L`);
+            let isFilled = cellS.classList.toggle('filled-cell');
+            let mC = 2 - c;
+            let cellT = document.getElementById(`cell_t_${id}_${k}_${r}_${mC}_R`);
+            if(isFilled) cellT.classList.add('solution-cell'); else cellT.classList.remove('solution-cell');
+            let cellTL = document.getElementById(`cell_t_${id}_${k}_${r}_${c}_L`);
+            if(isFilled) cellTL.classList.add('filled-cell'); else cellTL.classList.remove('filled-cell');
+        }
+
+        function genStoryTask(id, extraSpace, diff, rowIdx, pool) {
+            let label = (rowIdx !== null) ? `<span class="side-label" style="float:left;">${getLabel(rowIdx, 'practice')}</span>` : "";
+            if (pool.length === 0) pool = [...ALL_STORIES];
+            let index = rand(0, pool.length-1); let s = pool[index]; pool.splice(index, 1);
+            let nA = getDistinctRandom(20, 80);
+            let nB = rand(5, 19);
+            let h2 = (currentMode === 'mix') ? '<h2>5. Rechengeschichte</h2>' : '';
+            
+            if (diff === 'easy') {
+                if(s.op === '+') {
+                    while ((nA % 10) === 0 || (nA % 10) === 1) nA = getDistinctRandom(20, 80); 
+                    nB = rand(2, 9);
+                    let distToNextTen = 10 - (nA % 10);
+                    if (nB <= distToNextTen) nB = rand(distToNextTen + 1, 9);
+                } else {
+                    while ((nA % 10) === 0 || (nA % 10) === 9) nA = getDistinctRandom(20, 80);
+                    nB = rand(2, 9);
+                    let distToPrevTen = nA % 10;
+                    if (nB <= distToPrevTen) nB = rand(distToPrevTen + 1, 9);
+                }
+            }
+
+            let gridHeight, cls;
+            if(currentMode === 'mix') {
+                gridHeight = '60px'; 
+                cls = 'task-row-mix story-wrapper';
+            } else {
+                gridHeight = '90px'; 
+                cls = 'task-row-story story-wrapper';
+            }
+
+            let textHtml = s.t.replace("{A}", `<input class="live-num story-input" id="in_sa_${id}" value="${nA}">`).replace("{B}", `<input class="live-num story-input" id="in_sb_${id}" value="${nB}">`);
+            
+            let sHtml = `<div class="${cls}">${h2}<div>${label}<div class="story-text">${textHtml}</div></div><div style="clear:both;"></div><div class="label-small">Rechnung:</div><div class="grid-paper" style="height:${gridHeight}; margin-bottom:5px;"></div><div class="label-small">Antwort:</div><div style="border-bottom: 2px dotted #000; height: 25px;"></div></div>`;
+            let tHtml = `<div class="${cls}">${h2}<div>${label}<div class="story-text" id="txt_t_${id}"></div></div><div style="clear:both;"></div><div class="label-small">Rechnung:</div><div class="grid-paper" style="height:${gridHeight}; margin-bottom:5px;"><div class="grid-text" style="color:var(--sol-color); line-height:26px; top:2px;" id="sol_calc_${id}"></div></div><div class="label-small">Antwort:</div><div style="border-bottom: 2px dotted #000; height: 25px;"><span class="answer-sol-text" id="sol_ans_${id}"></span></div></div>`;
+            const update = () => {
+                let vA = parseInt(document.getElementById(`in_sa_${id}`).value)||0; let vB = parseInt(document.getElementById(`in_sb_${id}`).value)||0;
+                let res, opChar = s.op; if(s.op==='+') res=vA+vB; else res=vA-vB;
+                document.getElementById(`txt_t_${id}`).innerHTML = s.t.replace("{A}", vA).replace("{B}", vB);
+                let diffMode = document.getElementById('diff-select').value; let solText = `${vA} ${opChar} ${vB} = ${res}`;
+                if (diffMode === 'hard') {
+                    let tB = Math.floor(vB/10)*10; let oB = vB%10;
+                    if(s.op === '+') solText += `\n${vA} + ${tB} = ${vA+tB}\n${vA+tB} + ${oB} = ${res}`;
+                    else solText += `\n${vA} - ${tB} = ${vA-tB}\n${vA-tB} - ${oB} = ${res}`;
+                } else {
+                    if(s.op === '+') { let toTen = (10 - vA%10)%10; if(toTen>vB) toTen=vB; let rest = vB-toTen; solText += `\n${vA} + ${toTen} = ${vA+toTen}\n${vA+toTen} + ${rest} = ${res}`; }
+                    else { let toTen = vA%10; if(toTen>vB) toTen=vB; let rest = vB-toTen; solText += `\n${vA} - ${toTen} = ${vA-toTen}\n${vA-toTen} - ${rest} = ${res}`; }
+                }
+                document.getElementById(`sol_calc_${id}`).innerText = solText;
+                let verb = (s.op === "+") ? "Es sind jetzt" : "Es sind noch"; if(s.t.includes("bleiben übrig")) verb = "Es bleiben";
+                document.getElementById(`sol_ans_${id}`).innerText = `${verb} ${res} ${s.u}.`;
+            };
+            return { student: sHtml, teacher: tHtml, registerListeners: () => { document.getElementById(`in_sa_${id}`).addEventListener('input', update); document.getElementById(`in_sb_${id}`).addEventListener('input', update); update(); }};
+        }
+
+        function updateTestNumber() { let s = localStorage.getItem('flexFloTestNr'); currentNr = s ? parseInt(s)+1 : 1; localStorage.setItem('flexFloTestNr', currentNr); document.querySelectorAll('.test-nr-display').forEach(d => d.innerText = currentNr); }
+        function loadInitialNumber() { let s = localStorage.getItem('flexFloTestNr'); currentNr = s ? parseInt(s) : 1; document.querySelectorAll('.test-nr-display').forEach(d => d.innerText = currentNr); }
+        function resetCounter() { if(confirm("Zähler auf 1 setzen?")) { localStorage.setItem('flexFloTestNr', 0); generateCurrent(true); } }
+
+        // INIT
+        loadInitialNumber();
+        generateCurrent(false); 
+    </script>
+</body>
+</html>
