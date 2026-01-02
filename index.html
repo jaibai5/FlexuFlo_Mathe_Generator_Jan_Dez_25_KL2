@@ -2,21 +2,24 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Mathe Generator V30.2 (Persistence Fix)</title>
+    <title>Mathe Generator V30.3 (Better School Font)</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Mali:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CSS VARIABLEN --- */
+        /* =========================================
+           CSS - DESIGN UND FARBEN
+           ========================================= */
         :root {
             --text-color: #000;
             --line-color: #000;
-            --sol-color: #d60000; 
-            --sol-bg: #ffcccc;    
-            --arc-blue: #007acc;  
-            --grid-line: #bbb;
-            --input-bg: rgba(255, 255, 0, 0.1); 
+            --sol-color: #d60000; /* Farbe der Lösungen (Rot) */
+            --sol-bg: #ffcccc;    /* Hintergrund der Lösungen */
+            --arc-blue: #007acc;  /* Farbe der Rechenbögen (Blau) */
+            --grid-line: #bbb;    /* Farbe der Karokästchen */
+            --input-bg: rgba(255, 255, 0, 0.1); /* Gelber Hintergrund für Eingabefelder */
         }
 
         body.ink-saver-mode {
@@ -25,68 +28,90 @@
             --arc-blue: #444;     
         }
 
-        /* --- GLOBAL --- */
-        body { font-family: 'Andika', sans-serif; background-color: #555; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        /* --- ALLGEMEINE SEITEN-EINSTELLUNGEN --- */
+        body { 
+            /* Standard-Schrift für Text ist Andika */
+            font-family: 'Andika', sans-serif; 
+            background-color: #555; 
+            margin: 0; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; 
+        }
         
-        /* PAGE STYLE */
-        .page { background: white; width: 210mm; min-height: 297mm; padding: 8mm 15mm; box-sizing: border-box; box-shadow: 0 0 15px rgba(0,0,0,0.5); position: relative; margin-bottom: 20px; overflow: hidden; color: var(--text-color); }
+        /* Das weiße Blatt Papier */
+        .page { 
+            background: white; 
+            width: 210mm; min-height: 297mm; /* A4 Format */
+            padding: 8mm 15mm; 
+            box-sizing: border-box; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.5); 
+            position: relative; margin-bottom: 20px; 
+            overflow: hidden; 
+            color: var(--text-color); 
+        }
         
         .page.hidden-page { display: none; }
 
-        /* Editier-Verhalten */
+        /* Verhalten beim Bearbeiten */
         [contenteditable="true"]:hover { background-color: rgba(255, 230, 0, 0.15); cursor: text; outline: 1px dotted #999; }
         [contenteditable="true"]:focus { background-color: rgba(255, 230, 0, 0.3); outline: none; }
 
-        /* Inputs */
-        input.live-num { font-family: 'Andika', sans-serif; font-size: inherit; font-weight: bold; color: inherit; background: var(--input-bg); border: 1px dotted #ccc; border-radius: 3px; text-align: center; width: 2.5ch; padding: 0 2px; -moz-appearance: textfield; }
+        /* --- ZAHLEN-DESIGN (NEUE SCHRIFTART) --- */
+        /* Wir nutzen 'Mali' für alles, was Zahlen sind, damit die 4 offen ist und die 7 deutlich */
+        input.live-num, 
+        .grid-text, 
+        .tick-label, 
+        .brick, 
+        .packet-item,
+        input.gap-input,
+        input.brick-input,
+        .arc-label,
+        .arc-big-label,
+        .answer-sol-text {
+            font-family: 'Mali', cursive; /* Handschriftlicher Look */
+        }
+
+        /* --- EINGABEFELDER --- */
+        input.live-num { 
+            font-size: inherit; font-weight: bold; 
+            color: inherit; background: var(--input-bg); 
+            border: 1px dotted #ccc; border-radius: 3px; 
+            text-align: center; width: 2.5ch; padding: 0 2px; 
+            -moz-appearance: textfield; 
+        }
         input.live-num:focus { background: #fff; outline: 2px solid #007acc; border-color: transparent; }
         input.live-num.story-input { width: 4ch; display: inline-block; vertical-align: baseline; }
         input.live-num.wide-input { width: 5ch; } 
         
-        /* Inputs für neue Übungsblätter */
+        /* Spezielle Inputs für Lückenaufgaben */
         input.gap-input { 
-            width: 6ch; 
-            height: 30px;
+            width: 6ch; height: 30px; 
             border-bottom: 2px solid #000; border-top:none; border-left:none; border-right:none; 
             background: var(--input-bg); border-radius: 0; 
             text-align: center; font-weight: bold; color: inherit; 
-            font-family: 'Andika', sans-serif; font-size: 22px;
+            font-size: 22px;
         }
         
-        .packet-item input.live-num {
-            font-size: 22px;
-            width: 5ch;
-            height: 30px;
-        }
+        .packet-item input.live-num { font-size: 22px; width: 5ch; height: 30px; }
 
-        /* Spezial für Mauern */
-        input.brick-input {
-            width: 90%;
-            height: 90%;
-            border: none;
-            background: var(--input-bg);
-            text-align: center;
-            font-family: 'Andika', sans-serif;
-            font-size: 16px;
-            font-weight: bold;
+        /* Spezielle Inputs für Mauersteine */
+        input.brick-input { 
+            width: 90%; height: 90%; border: none; 
+            background: var(--input-bg); 
+            text-align: center; font-size: 16px; font-weight: bold; 
         }
         input.brick-input:focus { outline: 2px solid #007acc; background: #fff; }
 
-        /* --- CONTROLS --- */
+        /* --- STEUERMENÜ (LINKS) --- */
         .controls { 
             position: fixed; top: 20px; left: 20px; width: 270px; 
-            background: #fff; padding: 20px; 
-            padding-bottom: 70px; 
+            background: #fff; padding: 20px; padding-bottom: 70px; 
             border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 1000; 
             max-height: 90vh; overflow-y: auto; font-family: 'Segoe UI', sans-serif; 
             display: flex; flex-direction: column;
         }
         .controls h3 { margin-top: 0; margin-bottom: 15px; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         
-        .version-footer { 
-            margin-top: 20px; 
-            font-size: 11px; color: #999; font-style: italic; text-align: center;
-        }
+        .version-footer { margin-top: 20px; font-size: 11px; color: #999; font-style: italic; text-align: center; }
         
         .nav-label-xl { font-size: 16px; font-weight: 900; color: #000; margin-bottom: 8px; text-transform: uppercase; border-bottom: 2px solid #ffcc00; display: inline-block; }
         .nav-label { font-size: 12px; font-weight: bold; color: #666; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
@@ -103,7 +128,7 @@
         .btn-reset { background-color: #ddd; color: #333; font-size: 12px; padding: 5px; margin-top:10px; }
         .btn-feedback { background-color: #6c757d; color: white; font-size: 14px; margin-top: 5px; }
 
-        /* Modal */
+        /* --- HILFE MODAL (POPUP) --- */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { background: white; width: 600px; max-width: 90%; padding: 25px; border-radius: 10px; font-family: 'Segoe UI', sans-serif; overflow-y: auto; max-height: 90vh; }
         .close-modal { background: #d60000; color: white; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; float: right; font-weight: bold; }
@@ -112,21 +137,11 @@
         .modal-box li { margin-bottom: 5px; font-size: 14px; }
         .modal-box p { margin-bottom: 10px; line-height: 1.4; color: #333; }
 
-        /* --- BLATT ELEMENTE --- */
+        /* --- FORMATIERUNG AUF DEM BLATT --- */
         .solution-mark { position: absolute; top: 10mm; right: 10mm; font-size: 20px; font-weight: bold; color: var(--sol-color); border: 2px solid var(--sol-color); padding: 5px 10px; transform: rotate(15deg); opacity: 0.8; }
         .sol { color: var(--sol-color); font-weight: bold; transition: color 0.3s; }
         
-        .header-title { 
-            text-align: center; 
-            font-size: 18px; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            border-bottom: 3px double #000; 
-            padding-bottom: 1px; 
-            margin-bottom: 5px; 
-            letter-spacing: 1px; 
-        }
-        
+        .header-title { text-align: center; font-size: 18px; font-weight: bold; text-transform: uppercase; border-bottom: 3px double #000; padding-bottom: 1px; margin-bottom: 5px; letter-spacing: 1px; }
         .meta-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 16px; font-weight: 500; }
         .line { display: inline-block; border-bottom: 1px solid #000; height: 18px; }
         .test-number { font-weight: bold; font-size: 18px; color: #333; padding-left: 5px; }
@@ -142,19 +157,9 @@
         
         /* Flex/Flo Style für Päckchen */
         .packet-container { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; margin-top: 20px; }
-        .packet { 
-            width: 48%; 
-            margin-bottom: 30px; 
-            background: #fdfdfd; 
-            border: 2px solid #eee; 
-            border-radius: 10px; 
-            padding: 15px 10px; 
-            padding-top: 35px; 
-            box-sizing: border-box; 
-            position: relative;
-        }
+        .packet { width: 48%; margin-bottom: 30px; background: #fdfdfd; border: 2px solid #eee; border-radius: 10px; padding: 15px 10px; padding-top: 35px; box-sizing: border-box; position: relative; }
         .packet-label { position: absolute; top: 5px; left: 10px; font-weight: bold; color: #000; font-size: 18px; }
-        .packet-item { font-size: 22px; font-weight: 500; margin-bottom: 12px; font-family: 'Andika', sans-serif; display: flex; align-items: center; justify-content: flex-start; padding-left: 10px; }
+        .packet-item { font-size: 22px; font-weight: 500; margin-bottom: 12px; display: flex; align-items: center; justify-content: flex-start; padding-left: 10px; }
         
         .header-spacer { height: 30px; width: 100%; }
         .top-margin-large { margin-top: 40px; }
@@ -196,42 +201,23 @@
         .arc-big { position: absolute; bottom: 2px; border-top: 2px solid var(--arc-blue); border-left: 2px solid var(--arc-blue); border-right: 2px solid var(--arc-blue); border-top-left-radius: 30px; border-top-right-radius: 30px; height: 50px; box-sizing: border-box; border-bottom: none; z-index: 4; transition: all 0.3s; }
         .arc-big-label { position: absolute; top: -25px; width: 100%; text-align: center; color: var(--arc-blue); font-size: 14px; font-weight: bold; }
 
-        .story-text { font-size: 16px; line-height: 1.3; margin-bottom: 3px; font-family: 'Andika', sans-serif; }
+        .story-text { font-size: 16px; line-height: 1.3; margin-bottom: 3px; }
         .label-small { font-size: 12px; color: #555; font-style: italic; margin-bottom: 2px; }
-        .answer-sol-text { font-family: 'Andika', sans-serif; color: var(--sol-color); margin-left: 10px; font-size: 16px; }
+        .answer-sol-text { color: var(--sol-color); margin-left: 10px; font-size: 16px; }
 
         /* --- DRUCK-MODUS --- */
-        @page { 
-            size: A4; 
-            margin: 0mm; 
-        }
-        
+        @page { size: A4; margin: 0mm; }
         @media print {
             body { background: none; display: block; margin: 0; padding: 0; }
             .controls, .modal-overlay { display: none !important; }
             [contenteditable="true"] { outline: none !important; background-color: transparent !important; }
-            
             input.live-num { border: none !important; background: transparent !important; padding: 0 !important; -webkit-appearance: none; margin: 0; }
             input.brick-input { background: transparent !important; }
             input.gap-input { border-bottom: 2px solid #000 !important; background: transparent !important; -webkit-appearance: none; }
             input.gap-field { color: transparent !important; text-shadow: none !important; }
-
             .packet { background: transparent; border: none; padding: 0; padding-top: 30px; margin-bottom: 20px; } 
             .packet-label { top: 0; left: 0; }
-            
-            .page { 
-                width: 210mm; 
-                height: 296mm; 
-                margin: 0; 
-                padding: 8mm 15mm; 
-                border: none; 
-                box-shadow: none; 
-                zoom: 1.0; 
-                page-break-after: always; 
-                break-after: page; 
-                display: block !important; 
-                overflow: hidden;
-            }
+            .page { width: 210mm; height: 296mm; margin: 0; padding: 8mm 15mm; border: none; box-shadow: none; zoom: 1.0; page-break-after: always; break-after: page; display: block !important; overflow: hidden; }
             .page.hidden-page { display: none !important; }
             .page:last-child { page-break-after: avoid; break-after: avoid; }
         }
@@ -294,7 +280,7 @@
         
         <hr style="margin: 25px 0 15px 0; border: 0; border-top: 1px solid #ddd;">
         <div class="nav-label">Aufgabentyp (Logik):</div>
-        <select id="diff-select" onchange="clearCacheAndRecalc()">
+        <select id="diff-select" onchange="triggerRecalcAll()">
             <option value="easy">ZE ± E (Zehnerübergang)</option>
             <option value="hard">ZE ± ZE (Schrittweise)</option>
         </select>
@@ -312,7 +298,7 @@
         <a href="mailto:mark@simsoft.de" class="action-btn btn-feedback">✉️ E-Mail an Mark</a>
 
         <div class="version-footer">
-            Vorbereitung Mathe Klasse 2 (Flex & Flo) - V30.2
+            Vorbereitung Mathe Klasse 2 (Flex & Flo) - V30.3
         </div>
     </div>
 
@@ -363,13 +349,11 @@
         let currentMode = 'mix'; 
         let uniqueIdCounter = 0;
         
-        // --- APP CACHE FOR PERSISTENCE ---
-        // This object stores the generated HTML and listeners for each mode.
-        // It prevents regeneration when switching tabs unless "Neu Würfeln" is clicked.
+        // Zwischenspeicher, damit Aufgaben beim Tab-Wechsel erhalten bleiben
         let appCache = {};
 
-        // --- SAFE NUMBER GENERATOR ---
-        // Prevents infinite loops by having a retry limit
+        // --- SICHERER ZUFALLSGENERATOR ---
+        // Verhindert Endlosschleifen und Abstürze, wenn keine Zahl gefunden wird.
         function getSafeRandom(min, max, conditionFn, fallback) {
             let tries = 0;
             if (min > max) { let temp = min; min = max; max = temp; }
@@ -415,10 +399,10 @@
             });
         }
 
-        // Logic to clear cache when difficulty changes
+        // Leert den Cache (Zwischenspeicher) und erzwingt neue Zahlen
         function clearCacheAndRecalc() {
             appCache = {};
-            generateCurrent(true); // Force regeneration
+            generateCurrent(true); 
         }
 
         function switchMode(mode, btnElement) {
@@ -440,14 +424,12 @@
                 document.getElementById('page-student-2').classList.add('hidden-page');
                 document.getElementById('page-solution-2').classList.add('hidden-page');
             }
-            // Passing false here triggers the cache check
             generateCurrent(false);
         }
 
         function generateCurrent(forceNew = false) {
             if (forceNew) {
                 if(currentMode === 'mix') updateTestNumber();
-                // Clear cache for current mode to allow regeneration
                 appCache[currentMode] = null;
             } else {
                 loadInitialNumber();
@@ -458,23 +440,20 @@
             const sCont2 = document.getElementById('student-content-2');
             const tCont2 = document.getElementById('solution-content-2');
 
-            // --- CHECK CACHE ---
+            // --- PRÜFE CACHE ---
             if (!forceNew && appCache[currentMode]) {
-                // Restore content from cache
                 let c = appCache[currentMode];
                 sCont1.innerHTML = c.s1;
                 sCont2.innerHTML = c.s2;
                 tCont1.innerHTML = c.t1;
                 tCont2.innerHTML = c.t2;
-                // Re-bind listeners
                 c.listeners.forEach(fn => fn());
-                // Trigger recalc to update solutions based on inputs
                 triggerRecalcAll();
                 makeFieldsEditable();
                 return; 
             }
 
-            // --- GENERATION START ---
+            // --- NEUE AUFGABEN GENERIEREN ---
             sCont1.innerHTML = ''; tCont1.innerHTML = '';
             sCont2.innerHTML = ''; tCont2.innerHTML = '';
             
@@ -490,8 +469,8 @@
                     let divT = document.createElement('div'); divT.innerHTML = taskObj.teacher;
                     targetS.appendChild(divS); targetT.appendChild(divT);
                     if (taskObj.registerListeners) {
-                        taskObj.registerListeners(); // Execute once to init
-                        accumulatedListeners.push(taskObj.registerListeners); // Save for cache restore
+                        taskObj.registerListeners(); 
+                        accumulatedListeners.push(taskObj.registerListeners); 
                     }
                 } catch(e) { console.error("Error generating task", e); }
             };
@@ -525,7 +504,7 @@
             
             makeFieldsEditable();
 
-            // SAVE TO CACHE
+            // IN CACHE SPEICHERN
             appCache[currentMode] = {
                 s1: sCont1.innerHTML,
                 s2: sCont2.innerHTML,
@@ -537,8 +516,9 @@
 
         function triggerRecalcAll() { document.querySelectorAll('input.live-num').forEach(inp => { inp.dispatchEvent(new Event('input')); }); }
 
-        // --- TASKS ---
-
+        // ========================
+        // 1. RECHENSCHRITTE
+        // ========================
         function genStepTask(id, extraSpace, diff, rowIdx) {
             let labelL = (rowIdx === null) ? 'a)' : getLabel(rowIdx * 2, 'practice');
             let labelR = (rowIdx === null) ? 'b)' : getLabel(rowIdx * 2 + 1, 'practice');
@@ -567,9 +547,9 @@
             const update = () => {
                 const diffMode = document.getElementById('diff-select').value;
                 let va1 = parseInt(document.getElementById(`in_a1_${id}`).value)||0; let va2 = parseInt(document.getElementById(`in_a2_${id}`).value)||0;
-                let resA = va1+va2, midA;
+                let resA = va1+va2, midA, rest;
                 if (diffMode === 'easy') {
-                    let toTen = (10 - (va1%10))%10; if(toTen>va2) toTen=va2; let rest=va2-toTen; midA=va1+toTen;
+                    let toTen = (10 - (va1%10))%10; if(toTen>va2) toTen=va2; rest=va2-toTen; midA=va1+toTen;
                     document.getElementById(`out_a_${id}`).innerHTML = `${va1} + ${va2} = <span class="sol">${resA}</span>\n${va1} + ${toTen} = <span class="sol">${midA}</span>\n<span class="sol">${midA}</span> + <span class="sol">${rest}</span> = <span class="sol">${resA}</span>`;
                 } else {
                     let tens = Math.floor(va2/10)*10; let ones = va2%10; midA = va1+tens;
@@ -578,7 +558,7 @@
                 let vb1 = parseInt(document.getElementById(`in_b1_${id}`).value)||0; let vb2 = parseInt(document.getElementById(`in_b2_${id}`).value)||0;
                 let resB = vb1-vb2, midB;
                 if (diffMode === 'easy') {
-                    let toTen = vb1%10; if(toTen>vb2) toTen=vb2; let rest=vb2-toTen; midB=vb1-toTen;
+                    let toTen = vb1%10; if(toTen>vb2) toTen=vb2; rest=vb2-toTen; midB=vb1-toTen;
                     document.getElementById(`out_b_${id}`).innerHTML = `${vb1} - ${vb2} = <span class="sol">${resB}</span>\n${vb1} - ${toTen} = <span class="sol">${midB}</span>\n<span class="sol">${midB}</span> - <span class="sol">${rest}</span> = <span class="sol">${resB}</span>`;
                 } else {
                     let tens = Math.floor(vb2/10)*10; let ones = vb2%10; midB = vb1-tens;
@@ -588,6 +568,9 @@
             return { student: wrapperS, teacher: wrapperT, registerListeners: () => { [`in_a1_${id}`, `in_a2_${id}`, `in_b1_${id}`, `in_b2_${id}`].forEach(iid => { let el = document.getElementById(iid); if(el) el.addEventListener('input', update); }); update(); }};
         }
 
+        // ========================
+        // 2. RECHENSTRICH
+        // ========================
         function genLineTask(id, extraSpace, diff, rowIdx) {
             let labelA = (rowIdx === null) ? 'a)' : getLabel(rowIdx * 2, 'practice');
             let labelB = (rowIdx === null) ? 'b)' : getLabel(rowIdx * 2 + 1, 'practice');
@@ -633,6 +616,9 @@
             return { student: wrapperS, teacher: wrapperT, registerListeners: () => { [`in_s_a_${id}`, `in_d_a_${id}`, `in_s_b_${id}`, `in_d_b_${id}`].forEach(iid => { let el=document.getElementById(iid); if(el) el.addEventListener('input', update); }); update(); }};
         }
 
+        // ========================
+        // 3. RECHENMAUERN
+        // ========================
         function genWallTask(id, extraSpace, diff, rowIdx) {
             let labels = rowIdx === null ? ['a)', 'b)', 'c)'] : [getLabel(rowIdx*3, 'practice'), getLabel(rowIdx*3+1, 'practice'), getLabel(rowIdx*3+2, 'practice')];
             let walls = []; 
@@ -730,6 +716,9 @@
             }};
         }
 
+        // ========================
+        // 4. SYMMETRIE
+        // ========================
         function genSymTask(id, extraSpace, diff, rowIdx, headerOverride) {
             let labels = rowIdx === null ? ['a)', 'b)'] : [getLabel(rowIdx*2, 'practice'), getLabel(rowIdx*2+1, 'practice')];
             let h2 = "";
@@ -763,6 +752,9 @@
             if(isFilled) cellTL.classList.add('filled-cell'); else cellTL.classList.remove('filled-cell');
         }
 
+        // ========================
+        // 5. TEXTAUFGABEN
+        // ========================
         function genStoryTask(id, extraSpace, diff, rowIdx, pool, headerText, labelOverride, gridHeightOverride) {
             let label = (labelOverride) ? `<span class="side-label" style="float:left;">${labelOverride}</span>` : ((rowIdx !== null) ? `<span class="side-label" style="float:left;">${getLabel(rowIdx, 'practice')}</span>` : "");
             if (pool.length === 0) pool = [...ALL_STORIES];
@@ -811,6 +803,9 @@
             return { student: sHtml, teacher: tHtml, registerListeners: () => { document.getElementById(`in_sa_${id}`).addEventListener('input', update); document.getElementById(`in_sb_${id}`).addEventListener('input', update); update(); }};
         }
 
+        // ========================
+        // 6. KOPFRECHNEN
+        // ========================
         function genMentalTask(id, extraSpace, diff, rowIdx, countOverride) {
             let count = countOverride || 32; let packetSize = 4;
             let sHtml = `<div class="top-margin-large packet-container">`;
@@ -855,6 +850,9 @@
             return { student: sHtml, teacher: tHtml, registerListeners: () => { inputIds.forEach(item => { document.getElementById(item.idA).addEventListener('input', update); document.getElementById(item.idB).addEventListener('input', update); }); update(); } };
         }
 
+        // ========================
+        // 7. LÜCKENAUFGABEN
+        // ========================
         function genGapTask(id, extraSpace, diff, rowIdx, countOverride) {
             let count = countOverride || 24; let packetSize = 5; 
             let sHtml = `<div class="top-margin-large packet-container">`;
@@ -942,5 +940,4 @@
         generateCurrent(false); 
     </script>
 </body>
- 
 </html>
